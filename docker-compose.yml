@@ -1,0 +1,32 @@
+version: '3.4'
+
+services:
+  consoleapp1:
+    image: ${DOCKER_REGISTRY-}consoleapp1
+    build:
+      context: .
+      dockerfile: ConsoleApp1/Dockerfile
+    networks:
+      network:
+        ipv4_address: 10.5.0.5
+
+  consoleapp2:
+    image: ${DOCKER_REGISTRY-}consoleapp2
+    build:
+      context: .
+      dockerfile: ConsoleApp2/Dockerfile
+    networks:
+      network:
+        ipv4_address: 10.5.0.6
+  shared:
+    image: ${DOCKER_REGISTRY-}shared
+    build:
+      context: .
+      dockerfile: Shared/Dockerfile
+
+networks:
+  network:
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
