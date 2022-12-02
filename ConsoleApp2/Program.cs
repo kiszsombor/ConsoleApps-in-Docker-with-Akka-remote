@@ -42,7 +42,7 @@ namespace System2
 
         static void Main()
         {
-            using (var system = ActorSystem.Create("Deployer", ConfigurationFactory.ParseString(@"
+            var config = ConfigurationFactory.ParseString(@"
                 akka {  
                     actor{
                         provider = remote
@@ -50,13 +50,7 @@ namespace System2
                                     /remoteecho {
                                         remote = ""akka.tcp://DeployTarget@10.5.0.5:8090""
                                     }
-                                }
-                    }
-                    serializers {
-                        hyperion = ""Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion""
-                    }
-                    serialization-bindings {
-                        ""System.Object"" = hyperion
+                        }
                     }
                     remote {
                         dot-netty.tcp {
@@ -64,53 +58,24 @@ namespace System2
                             hostname = 10.5.0.6
                         }
                     }
-                }")))
-            {
-                //deploy remotely via config
-                var remoteEcho1 = system.ActorOf(Props.Create(() => new EchoActor()), "remoteecho");
+                }");
 
-                //deploy remotely via code
-                var remoteAddress = Address.Parse("akka.tcp://DeployTarget@10.5.0.5:8090");
-                var remoteEcho2 =
-                    system.ActorOf(
-                        Props.Create(() => new EchoActor())
-                            .WithDeploy(Deploy.None.WithScope(new RemoteScope(remoteAddress))), "coderemoteecho");
+            using var system = ActorSystem.Create("Deployer", config);
+            //deploy remotely via config
+            var remoteEcho1 = system.ActorOf(Props.Create(() => new EchoActor()), "remoteecho");
+
+            //deploy remotely via code
+            var remoteAddress = Address.Parse("akka.tcp://DeployTarget@10.5.0.5:8090");
+            var remoteEcho2 =
+                system.ActorOf(
+                    Props.Create(() => new EchoActor())
+                        .WithDeploy(Deploy.None.WithScope(new RemoteScope(remoteAddress))), "coderemoteecho");
 
 
-                system.ActorOf(Props.Create(() => new HelloActor(remoteEcho1)));
-                system.ActorOf(Props.Create(() => new HelloActor(remoteEcho2)));
+            system.ActorOf(Props.Create(() => new HelloActor(remoteEcho1)));
+            system.ActorOf(Props.Create(() => new HelloActor(remoteEcho2)));
 
-                Console.ReadLine();
-            }
-
-                
-
-            //string hostName = Dns.GetHostName(); // Retrive the Name of HOST
-            //Console.WriteLine(hostName);
-            //// Get the IP
-            //string myIP = Dns.GetHostByName(hostName).AddressList[0].ToString();
-            //Console.WriteLine("My IP Address is: " + myIP);
-            //// Console.ReadKey();
-
-            //bool pingable = false;
-            //Ping? pinger = null;
-
-            //try
-            //{
-            //    pinger = new Ping();
-            //    PingReply reply = pinger.Send("10.5.0.5");
-            //    pingable = reply.Status == IPStatus.Success;
-            //    Console.WriteLine($"pinging {pingable}");
-            //}
-            //catch (PingException)
-            //{
-            //    // Discard PingExceptions and return false;
-            //    Console.WriteLine("PingExceptions");
-            //}
-            //finally
-            //{
-            //    pinger?.Dispose();
-            //}
+            Console.ReadLine();
         }
     }
 }
